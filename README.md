@@ -13,7 +13,7 @@ Sistema completo de monitoramento com dashboard interativo, APIs REST, WebSocket
 ### Instalação
 ```bash
 # Clone o repositório
-git clone <seu-repo>
+git clone <https://github.com/leodinalle/teste-tecnico-dashboard>
 cd dashboard-auth-fix
 
 # Instale as dependências
