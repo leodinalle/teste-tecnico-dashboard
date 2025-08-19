@@ -1,18 +1,18 @@
 import OpenAI from "openai"
 import { eventService } from "./event-service"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let openai: OpenAI | null = null
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+}
 
 export class OpenAIService {
   async generateInsight(hours = 24): Promise<string> {
     try {
-      // Buscar estatísticas dos dados
+      if (!openai) throw new Error("OpenAI não configurada")
+
       const stats = await eventService.getStats(hours)
       const events = await eventService.getEvents({ limit: 50 })
-
-      // Preparar contexto para a IA
       const context = this.prepareDataContext(stats, events, hours)
 
       const completion = await openai.chat.completions.create({
@@ -21,14 +21,11 @@ export class OpenAIService {
           {
             role: "system",
             content: `Você é um analista de dados especializado em monitoramento de aplicações. 
-            Analise os dados fornecidos e gere um insight conciso e acionável em português brasileiro.
-            Foque em tendências, padrões interessantes e recomendações práticas.
-            Mantenha o tom profissional mas acessível. Limite a resposta a 2-3 parágrafos.`,
+Analise os dados fornecidos e gere um insight conciso e acionável em português brasileiro.
+Foque em tendências, padrões interessantes e recomendações práticas.
+Mantenha o tom profissional mas acessível. Limite a resposta a 2-3 parágrafos.`,
           },
-          {
-            role: "user",
-            content: context,
-          },
+          { role: "user", content: context },
         ],
         max_tokens: 500,
         temperature: 0.7,
@@ -36,7 +33,7 @@ export class OpenAIService {
 
       return completion.choices[0]?.message?.content || "Não foi possível gerar insight no momento."
     } catch (error) {
-      console.error("[v0] Erro ao gerar insight com OpenAI:", error)
+      console.log("[v0] OpenAI não configurada, usando insight de exemplo")
       return this.generateFallbackInsight(hours)
     }
   }
@@ -66,16 +63,10 @@ ${stats.topUsers
   .join("\n")}
 
 TENDÊNCIAS HORÁRIAS:
-${stats.eventsByHour
-  .slice(-6)
-  .map((hour: any) => `${hour.label}: ${hour.count} eventos`)
-  .join(", ")}
+${stats.eventsByHour.slice(-6).map((hour: any) => `${hour.label}: ${hour.count} eventos`).join(", ")}
 
 EVENTOS RECENTES:
-${events
-  .slice(0, 5)
-  .map((event) => `- ${event.type} por ${event.userId} (R$ ${event.value})`)
-  .join("\n")}
+${events.slice(0, 5).map((event) => `- ${event.type} por ${event.userId} (R$ ${event.value})`).join("\n")}
 
 ${recentTrends}
 
@@ -86,23 +77,17 @@ Analise esses dados e forneça insights acionáveis sobre performance, comportam
   private analyzeRecentTrends(events: any[]): string {
     const now = new Date()
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
-
     const recentEvents = events.filter((event) => new Date(event.timestamp) >= oneHourAgo)
-
     const trends = []
 
     if (recentEvents.length === 0) {
       trends.push("TENDÊNCIA: Baixa atividade na última hora")
     } else {
       const recentPurchases = recentEvents.filter((e) => e.type === "purchase")
-      if (recentPurchases.length > 0) {
-        trends.push(`TENDÊNCIA: ${recentPurchases.length} compras na última hora`)
-      }
+      if (recentPurchases.length > 0) trends.push(`TENDÊNCIA: ${recentPurchases.length} compras na última hora`)
 
       const recentSignups = recentEvents.filter((e) => e.type === "signup")
-      if (recentSignups.length > 0) {
-        trends.push(`TENDÊNCIA: ${recentSignups.length} novos cadastros na última hora`)
-      }
+      if (recentSignups.length > 0) trends.push(`TENDÊNCIA: ${recentSignups.length} novos cadastros na última hora`)
     }
 
     return trends.join("\n")
@@ -125,8 +110,10 @@ Os dados mostram atividade consistente no sistema. Para uma análise mais detalh
 
   async generateDailyReport(): Promise<string> {
     try {
+      if (!openai) throw new Error("OpenAI não configurada")
+
       const stats = await eventService.getStats(24)
-      const yesterdayStats = await eventService.getStats(48) // Para comparação
+      const yesterdayStats = await eventService.getStats(48)
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -134,7 +121,7 @@ Os dados mostram atividade consistente no sistema. Para uma análise mais detalh
           {
             role: "system",
             content: `Você é um analista de dados. Gere um relatório diário conciso em português brasileiro 
-            comparando as métricas de hoje com ontem. Foque em mudanças significativas e recomendações.`,
+comparando as métricas de hoje com ontem. Foque em mudanças significativas e recomendações.`,
           },
           {
             role: "user",
@@ -159,8 +146,8 @@ Gere um relatório comparativo com insights e recomendações.
 
       return completion.choices[0]?.message?.content || "Relatório não disponível no momento."
     } catch (error) {
-      console.error("[v0] Erro ao gerar relatório diário:", error)
-      return "Erro ao gerar relatório diário. Verifique a configuração da OpenAI API."
+      console.log("[v0] OpenAI não configurada, usando relatório de exemplo")
+      return "Relatório de exemplo disponível. Configure a OPENAI_API_KEY para gerar insights reais."
     }
   }
 }
