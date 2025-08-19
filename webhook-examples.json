@@ -1,0 +1,64 @@
+{
+  "examples": [
+    {
+      "name": "Login Event",
+      "payload": {
+        "userId": "user_123",
+        "type": "login",
+        "value": 1,
+        "timestamp": "2025-01-19T10:00:00Z",
+        "metadata": {
+          "device": "desktop",
+          "browser": "Chrome",
+          "location": "São Paulo, BR"
+        }
+      }
+    },
+    {
+      "name": "Purchase Event",
+      "payload": {
+        "userId": "user_456",
+        "type": "purchase",
+        "value": 149.9,
+        "timestamp": "2025-01-19T11:30:00Z",
+        "metadata": {
+          "product": "Premium Plan",
+          "category": "subscription",
+          "payment_method": "credit_card"
+        }
+      }
+    },
+    {
+      "name": "Click Event",
+      "payload": {
+        "userId": "user_789",
+        "type": "click",
+        "value": 1,
+        "timestamp": "2025-01-19T12:15:00Z",
+        "metadata": {
+          "element": "cta_button",
+          "page": "/pricing",
+          "campaign": "winter_sale"
+        }
+      }
+    },
+    {
+      "name": "View Event",
+      "payload": {
+        "userId": "user_101",
+        "type": "view",
+        "value": 1,
+        "timestamp": "2025-01-19T13:45:00Z",
+        "metadata": {
+          "page": "/dashboard",
+          "duration": 120,
+          "referrer": "google.com"
+        }
+      }
+    }
+  ],
+  "curl_commands": [
+    "curl -X POST http://localhost:3000/api/webhook/event -H 'Content-Type: application/json' -d '{\"userId\":\"user_123\",\"type\":\"login\",\"value\":1,\"timestamp\":\"2025-01-19T10:00:00Z\",\"metadata\":{\"device\":\"desktop\"}}'",
+    "curl -X POST http://localhost:3000/api/webhook/event -H 'Content-Type: application/json' -d '{\"userId\":\"user_456\",\"type\":\"purchase\",\"value\":149.90,\"timestamp\":\"2025-01-19T11:30:00Z\",\"metadata\":{\"product\":\"Premium Plan\"}}'"
+  ]
+}
