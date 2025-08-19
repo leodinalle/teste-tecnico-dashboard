@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
       total: filteredEvents.length,
     })
   } catch (error) {
-    console.error("[v0] Erro ao buscar eventos:", error)
+    console.error("Erro ao buscar eventos:", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
 }
