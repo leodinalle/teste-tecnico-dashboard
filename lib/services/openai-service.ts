@@ -1,21 +1,27 @@
 import OpenAI from "openai"
 import { eventService } from "./event-service"
 
-let openai: OpenAI | null = null
-if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-}
-
 export class OpenAIService {
+  private openai: OpenAI
+
+  constructor() {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY não configurada")
+    }
+
+    // Inicializa sempre que a classe for criada
+    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  }
+
   async generateInsight(hours = 24): Promise<string> {
     try {
-      if (!openai) throw new Error("OpenAI não configurada")
+      console.log("🔑 OPENAI_API_KEY carregada?", process.env.OPENAI_API_KEY ? "SIM" : "NÃO")
 
       const stats = await eventService.getStats(hours)
       const events = await eventService.getEvents({ limit: 50 })
       const context = this.prepareDataContext(stats, events, hours)
 
-      const completion = await openai.chat.completions.create({
+      const completion = await this.openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
@@ -33,122 +39,33 @@ Mantenha o tom profissional mas acessível. Limite a resposta a 2-3 parágrafos.
 
       return completion.choices[0]?.message?.content || "Não foi possível gerar insight no momento."
     } catch (error) {
-      console.log("[v0] OpenAI não configurada, usando insight de exemplo")
+      console.error("❌ Erro ao chamar OpenAI:", error)
       return this.generateFallbackInsight(hours)
     }
   }
 
   private prepareDataContext(stats: any, events: any[], hours: number): string {
-    const topEventTypes = Object.entries(stats.eventsByType)
-      .sort(([, a], [, b]) => (b as number) - (a as number))
-      .slice(0, 3)
-
-    const recentTrends = this.analyzeRecentTrends(events)
-
     return `
-Dados de monitoramento das últimas ${hours} horas:
+Período analisado: últimas ${hours} horas
 
-ESTATÍSTICAS GERAIS:
-- Total de eventos: ${stats.totalEvents}
-- Ticket médio: R$ ${stats.averageTicket}
-- Usuários ativos: ${stats.topUsers.length}
+📊 Estatísticas:
+- Total de eventos: ${stats.total}
+- Eventos por tipo: ${JSON.stringify(stats.byType)}
+- Atividade por hora: ${JSON.stringify(stats.byHour)}
 
-EVENTOS POR TIPO:
-${topEventTypes.map(([type, count]) => `- ${type}: ${count} eventos`).join("\n")}
-
-TOP USUÁRIOS POR VALOR:
-${stats.topUsers
-  .slice(0, 3)
-  .map((user: any) => `- ${user.userId}: R$ ${user.value}`)
+📌 Exemplos de eventos recentes:
+${events
+  .slice(0, 5)
+  .map((e) => `- [${e.type}] ${e.message} (${new Date(e.timestamp).toLocaleString("pt-BR")})`)
   .join("\n")}
-
-TENDÊNCIAS HORÁRIAS:
-${stats.eventsByHour.slice(-6).map((hour: any) => `${hour.label}: ${hour.count} eventos`).join(", ")}
-
-EVENTOS RECENTES:
-${events.slice(0, 5).map((event) => `- ${event.type} por ${event.userId} (R$ ${event.value})`).join("\n")}
-
-${recentTrends}
-
-Analise esses dados e forneça insights acionáveis sobre performance, comportamento dos usuários e oportunidades de melhoria.
-    `.trim()
-  }
-
-  private analyzeRecentTrends(events: any[]): string {
-    const now = new Date()
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
-    const recentEvents = events.filter((event) => new Date(event.timestamp) >= oneHourAgo)
-    const trends = []
-
-    if (recentEvents.length === 0) {
-      trends.push("TENDÊNCIA: Baixa atividade na última hora")
-    } else {
-      const recentPurchases = recentEvents.filter((e) => e.type === "purchase")
-      if (recentPurchases.length > 0) trends.push(`TENDÊNCIA: ${recentPurchases.length} compras na última hora`)
-
-      const recentSignups = recentEvents.filter((e) => e.type === "signup")
-      if (recentSignups.length > 0) trends.push(`TENDÊNCIA: ${recentSignups.length} novos cadastros na última hora`)
-    }
-
-    return trends.join("\n")
+`
   }
 
   private generateFallbackInsight(hours: number): string {
-    return `
-**Análise Automática - Últimas ${hours}h**
-
-Os dados mostram atividade consistente no sistema. Para uma análise mais detalhada com insights personalizados da IA, configure sua chave da OpenAI nas variáveis de ambiente.
-
-**Recomendações Gerais:**
-- Monitore picos de atividade para otimizar recursos
-- Acompanhe a conversão de cadastros para compras
-- Verifique a performance durante horários de maior tráfego
-
-*Configure OPENAI_API_KEY para insights mais detalhados e personalizados.*
-    `.trim()
-  }
-
-  async generateDailyReport(): Promise<string> {
-    try {
-      if (!openai) throw new Error("OpenAI não configurada")
-
-      const stats = await eventService.getStats(24)
-      const yesterdayStats = await eventService.getStats(48)
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `Você é um analista de dados. Gere um relatório diário conciso em português brasileiro 
-comparando as métricas de hoje com ontem. Foque em mudanças significativas e recomendações.`,
-          },
-          {
-            role: "user",
-            content: `
-Dados de hoje (últimas 24h):
-- Eventos: ${stats.totalEvents}
-- Ticket médio: R$ ${stats.averageTicket}
-- Tipos de evento: ${JSON.stringify(stats.eventsByType)}
-
-Dados de ontem (24-48h atrás):
-- Eventos: ${yesterdayStats.totalEvents}
-- Ticket médio: R$ ${yesterdayStats.averageTicket}
-- Tipos de evento: ${JSON.stringify(yesterdayStats.eventsByType)}
-
-Gere um relatório comparativo com insights e recomendações.
-            `,
-          },
-        ],
-        max_tokens: 400,
-        temperature: 0.6,
-      })
-
-      return completion.choices[0]?.message?.content || "Relatório não disponível no momento."
-    } catch (error) {
-      console.log("[v0] OpenAI não configurada, usando relatório de exemplo")
-      return "Relatório de exemplo disponível. Configure a OPENAI_API_KEY para gerar insights reais."
-    }
+    return `Relatório de exemplo para as últimas ${hours} horas:
+- O sistema apresentou picos de atividade em determinados períodos.
+- Eventos críticos foram registrados e monitorados.
+- Recomenda-se analisar os logs detalhados para identificar possíveis padrões de falhas.`
   }
 }
 

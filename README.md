@@ -2,14 +2,16 @@
 
 Sistema completo de monitoramento com dashboard interativo, APIs REST, WebSocket e integração com OpenAI.
 
-##  Como Rodar Localmente
+---
+
+## 🚀 Como Rodar Localmente
 
 ### Pré-requisitos
 - Node.js 18+
-- MongoDB (opcional - sistema funciona com dados em memória)
+- MongoDB (local ou via Docker)
 
 ### Instalação
-\`\`\`bash
+```bash
 # Clone o repositório
 git clone <seu-repo>
 cd dashboard-auth-fix
@@ -19,55 +21,61 @@ npm install
 
 # Configure as variáveis de ambiente
 cp .env.example .env.local
-\`\`\`
-
-### Configuração do .env.local
-\`\`\`env
+Configuração do .env.local
+env
+Copiar
+Editar
 JWT_SECRET=sua-chave-jwt-super-secreta-aqui
 MONGODB_URI=mongodb://127.0.0.1:27017/dashboard-monitoring
 OPENAI_API_KEY=sk-sua-chave-openai-aqui
 NEXTAUTH_URL=http://localhost:3000
-\`\`\`
-
-### Executar o Sistema
-\`\`\`bash
+Executar o Sistema
+bash
+Copiar
+Editar
 # Desenvolvimento
 npm run dev
 
 # Acesse: http://localhost:3000
-\`\`\`
+🔑 Login
+Email: admin@dashboard.com
 
-##  Login
-- **Email:** admin@dashboard.com
-- **Senha:** admin123
+Senha: admin123
 
-##  Banco de Dados
+🗄️ Banco de Dados
+Escolha: MongoDB
+Justificativa:
 
-**Escolha:** MongoDB
-**Justificativa:** 
-- Flexibilidade para eventos com metadata variável
-- Melhor performance para agregações em tempo real
-- Schema dinâmico ideal para diferentes tipos de eventos
+Flexibilidade para eventos com metadata variável
 
-### Com MongoDB (Opcional)
-\`\`\`bash
-# Inicie o MongoDB
-mongod --dbpath "C:\data\db"
+Melhor performance para agregações em tempo real
 
-# Popule com dados de teste
-npm run seed
-\`\`\`
+Schema dinâmico ideal para diferentes tipos de eventos
 
-##  Webhook
+Rodando com Docker
+Se preferir, basta usar o docker-compose.yml incluso:
 
-### Endpoint
-\`\`\`
+bash
+Copiar
+Editar
+docker-compose up
+Isso vai iniciar:
+
+MongoDB na porta 27017
+
+Backend + Frontend do dashboard na porta 3000
+
+🌐 Webhook
+Endpoint
+bash
+Copiar
+Editar
 POST http://localhost:3000/api/webhook/event
 Content-Type: application/json
-\`\`\`
-
-### Payload de Exemplo
-\`\`\`json
+Payload de Exemplo
+json
+Copiar
+Editar
 {
   "userId": "user_123",
   "type": "purchase",
@@ -78,10 +86,10 @@ Content-Type: application/json
     "campaign": "summer-sale"
   }
 }
-\`\`\`
-
-### Teste com cURL
-\`\`\`bash
+Teste com cURL
+bash
+Copiar
+Editar
 curl -X POST http://localhost:3000/api/webhook/event \
   -H "Content-Type: application/json" \
   -d '{
@@ -94,74 +102,130 @@ curl -X POST http://localhost:3000/api/webhook/event \
       "location": "BR"
     }
   }'
-\`\`\`
+🤖 OpenAI Integration
+Configure sua chave da OpenAI no .env.local:
 
-##  OpenAI Integration
-
-Configure sua chave da OpenAI no `.env.local`:
-\`\`\`env
+env
+Copiar
+Editar
 OPENAI_API_KEY=sk-sua-chave-aqui
-\`\`\`
-
 O sistema gera insights automáticos baseados nos dados de eventos.
 
-##  Funcionalidades
+✨ Funcionalidades
+Backend
+✅ CRUD de eventos com campos: id, userId, type, value, timestamp, metadata
 
-### Backend
-- ✅ CRUD de eventos com campos: id, userId, type, value, timestamp, metadata
-- ✅ Endpoint webhook POST /webhook/event
-- ✅ APIs REST para dados brutos e agregados
-- ✅ Integração OpenAI para insights automáticos
-- ✅ WebSocket para atualizações em tempo real
-- ✅ Autenticação JWT
+✅ Endpoint webhook POST /webhook/event
 
-### Frontend
-- ✅ Dashboard protegido com login
-- ✅ Gráficos interativos (linha, pizza, top usuários)
-- ✅ Card com insights da OpenAI
-- ✅ Feed de eventos em tempo real
-- ✅ Filtros por data e tipo de evento
-- ✅ Indicador de última atualização
+✅ APIs REST para dados brutos e agregados
 
-### Extras Implementados
-- ✅ Cache em memória para performance
-- ✅ Dados de exemplo para demonstração
-- ✅ TypeScript completo
-- ✅ Design responsivo com Tailwind CSS
-- ✅ Tratamento de erros robusto
+✅ Integração OpenAI para insights automáticos
 
-##  Scripts Disponíveis
+✅ WebSocket para atualizações em tempo real
 
-\`\`\`bash
+✅ Autenticação JWT
+
+Frontend
+✅ Dashboard protegido com login
+
+✅ Gráficos interativos (linha, pizza, top usuários)
+
+✅ Card com insights da OpenAI
+
+✅ Feed de eventos em tempo real (com paginação e timestamps relativos)
+
+✅ Filtros por data e tipo de evento
+
+✅ Indicador de última atualização e status de conexão
+
+Extras Implementados
+✅ Cache em memória para performance
+
+✅ Dados de exemplo para demonstração
+
+✅ TypeScript completo
+
+✅ Design responsivo com Tailwind CSS
+
+✅ Tratamento de erros robusto
+
+✅ Suporte Docker para rodar em 1 comando
+
+🧪 Testes
+Para rodar testes unitários:
+
+bash
+Copiar
+Editar
+npm run test
+📜 Scripts Disponíveis
+bash
+Copiar
+Editar
 npm run dev          # Desenvolvimento
 npm run build        # Build para produção
 npm run start        # Produção
 npm run seed         # Popular MongoDB com dados de teste
 npm run seed-memory  # Dados de exemplo em memória
-\`\`\`
+🔗 Endpoints da API
+Autenticação
+POST /api/auth/login - Login do usuário
 
-##  Endpoints da API
+POST /api/auth/verify - Verificar token JWT
 
-### Autenticação
-- `POST /api/auth/login` - Login do usuário
-- `POST /api/auth/verify` - Verificar token JWT
+Eventos
+GET /api/events - Listar eventos (com filtros)
 
-### Eventos
-- `GET /api/events` - Listar eventos (com filtros)
-- `GET /api/events/stats` - Estatísticas agregadas
-- `POST /api/webhook/event` - Receber eventos via webhook
+GET /api/events/stats - Estatísticas agregadas
 
-### Insights
-- `GET /api/insights` - Gerar insight com OpenAI
+POST /api/webhook/event - Receber eventos via webhook
 
-##  WebSocket
+Insights
+GET /api/insights - Gerar insight com OpenAI
 
-O sistema usa WebSocket simulado para atualizações em tempo real. Novos eventos via webhook são automaticamente refletidos no dashboard.
+⚡ WebSocket
+O sistema usa WebSocket simulado para atualizações em tempo real.
+Novos eventos via webhook são automaticamente refletidos no dashboard.
 
-##  Demonstração
+🖼️ Preview
 
-1. Acesse o dashboard e faça login
-2. Veja gráficos e estatísticas em tempo real
-3. Envie eventos via webhook (cURL acima)
-4. Observe atualizações automáticas no dashboard
-5. Gere insights com IA clicando no botão correspondente
+yaml
+Copiar
+Editar
+
+---
+
+## 📦 `docker-compose.yml`
+
+Salve na raiz do projeto (`docker-compose.yml`):
+
+```yaml
+version: "3.9"
+services:
+  mongodb:
+    image: mongo:6
+    container_name: dashboard-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  app:
+    build: .
+    container_name: dashboard-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/dashboard-monitoring
+      - JWT_SECRET=sua-chave-jwt-secreta
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXTAUTH_URL=http://localhost:3000
+    depends_on:
+      - mongodb
+    volumes:
+      - .:/usr/src/app
+
+volumes:
+  mongo_data:
